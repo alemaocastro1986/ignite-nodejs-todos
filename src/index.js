@@ -17,6 +17,17 @@ function checksExistsUserAccount(request, response, next) {
 app.post("/users", (request, response) => {
   const { name, username } = request.body;
   const id = uuidv4();
+
+  const alreadyExistsUsername = users.find(
+    (user) => user.username === username
+  );
+
+  if (alreadyExistsUsername) {
+    return response.status(400).json({
+      error: "Username already in use.",
+    });
+  }
+
   const newUser = {
     id,
     name,
