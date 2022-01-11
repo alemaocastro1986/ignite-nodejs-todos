@@ -11,7 +11,27 @@ app.use(express.json());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const isValidHeader = request?.headers && request?.headers?.username;
+  const usersList = users;
+  if (!isValidHeader) {
+    return response.status(400).json({
+      error: "Request header not provided.",
+    });
+  }
+  const { username } = request.headers;
+
+  const userAlreadyExists = usersList.find(
+    (user) => user.username === username
+  );
+
+  if (!userAlreadyExists) {
+    return response.status(404).json({
+      error: "User not found.",
+    });
+  }
+
+  request.username = username;
+  return next();
 }
 
 app.post("/users", (request, response) => {
@@ -39,15 +59,34 @@ app.post("/users", (request, response) => {
 });
 
 app.get("/todos", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { todos } = users.find((user) => user.username === request.username);
+  return response.json(todos);
 });
 
 app.post("/todos", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const newTodo = {
+    id: uuidv4(), // precisa ser um uuid
+    title: request.body.title,
+    done: false,
+    deadline: new Date(request.body.deadline),
+    created_at: new Date(),
+  };
+
+  const userIndex = users.findIndex(
+    (user) => user.username === request.username
+  );
+  const user = users.splice(userIndex, 1)[0];
+  const userWithNewTodo = Object.assign({}, user, {
+    todos: [...user.todos, newTodo],
+  });
+  users.push(userWithNewTodo);
+
+  return response.status(201).json(newTodo);
 });
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { username } = request;
+  return response.json({ username });
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
